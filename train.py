@@ -36,5 +36,5 @@ if os.path.isfile("bin/agent_{}.h5".format(name)) and os.path.isfile("bin/agent_
 else:
     model.init_model(image_input_shape=image_input_shape, actions_input_shape=actions_input_shape, output_size=output_size)
 
-model.fit(dataset.input_observations, dataset.input_available_actions, dataset.output_actions, dataset.output_params, epochs)
+model.fit(dataset.input_observations, dataset.input_available_actions, dataset.output_actions, dataset.output_params, epochs, name)
 model.save("agent_{}".format(name))
