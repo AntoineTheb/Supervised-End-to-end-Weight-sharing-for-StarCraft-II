@@ -25,9 +25,7 @@ class TrainedAgent(base_agent.BaseAgent):
 
         input_batch = [np.array([observation]), np.array([available_actions])]
         action, position = self.model.predict(input_batch)
-        screen_size = np.shape(obs.observation["screen"])[1]
-        x = int(screen_size * position[0])
-        y = int(screen_size * position[1])
+        y, x = np.unravel_index(position, obs.observation["screen"].shape[1:])
 
         # if action in obs.observation["available_actions"]:
             # print("action is available: ", action, x, y)

@@ -36,19 +36,17 @@ class Dataset:
                     output_action[state[2]] = 1.0
                     self.output_actions.append(output_action)
 
+                    attention_map = np.zeros(np.shape(state[0])[0:2])
                     if np.shape(state[3]) == (2,):
-                        image_size = np.shape(state[0])[0]
-                        point = [float(state[3][1][0]) / image_size, float(state[3][1][1]) / image_size]
-                        self.output_params.append(point)
-                    else:
-                        self.output_params.append([0, 0])
+                        attention_map[state[3][1][0], state[3][1][1]] = 1
+                    self.output_params.append(attention_map)
 
         assert len(self.input_observations) == len(self.input_available_actions) == len(self.output_actions) == len(self.output_params)
 
         self.input_observations = np.array(self.input_observations)
         self.input_available_actions = np.array(self.input_available_actions)
         self.output_actions = np.array(self.output_actions)
-        self.output_params = np.array(self.output_params)
+        self.output_params = np.expand_dims(np.array(self.output_params), axis=3).reshape(-1,7056)
 
         print("input observations: ", np.shape(self.input_observations))
         print("input available actions ", np.shape(self.input_available_actions))
