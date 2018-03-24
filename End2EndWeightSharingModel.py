@@ -17,9 +17,9 @@ class End2EndWeightSharingModel:
     def init_model(self, image_input_shape, actions_input_shape, output_size):
         image_model = Sequential()
 
-        image_model.add(Conv2D(32, (8, 8), strides=(4, 4), activation='relu', input_shape=image_input_shape))
-        image_model.add(Conv2D(64, (4, 4), strides=(2, 2), activation='relu'))
-        image_model.add(Conv2D(64, (3, 3), activation='relu'))
+        image_model.add(Conv2D(32, (8, 8), strides=(4, 4), activation='relu', input_shape=image_input_shape, padding='same'))
+        image_model.add(Conv2D(64, (4, 4), strides=(2, 2), activation='relu', padding='same'))
+        image_model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
         image_model.add(Flatten())
         image_model.add(Dense(512, activation='relu'))
 
