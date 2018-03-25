@@ -60,8 +60,8 @@ class AgentBeacon(TrainedAgent):
         self.model = End2EndWeightSharingModel()
         self.model.load("agent_beacon")
 
-class AgentMineral(TrainedAgent):
+class AgentMinerals(TrainedAgent):
     def __init__(self):
         base_agent.BaseAgent.__init__(self)
         self.model = End2EndWeightSharingModel()
-        self.model.load("agent_mineral")
+        self.model.load("agent_minerals")

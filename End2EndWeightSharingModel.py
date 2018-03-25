@@ -39,11 +39,11 @@ class End2EndWeightSharingModel:
 
         #optimizer = RMSprop(lr=0.0001, clipvalue=1.0)
         optimizer = Adam(lr=0.00001)
-        self.model.compile(loss=['categorical_crossentropy', 'sparse_categorical_crossentropy'], optimizer=optimizer)
+        self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy'], optimizer=optimizer)
 
     def init_loaded_model(self):
         optimizer = Adam(lr=0.00001)
-        self.model.compile(loss=['categorical_crossentropy', 'sparse_categorical_crossentropy'], optimizer=optimizer)
+        self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy'], optimizer=optimizer)
 
     def fit(self, x_observations, x_available_actions, y_taken_actions, y_attention_map, epochs):
         self.model.fit([x_observations, x_available_actions], [y_taken_actions, y_attention_map], shuffle=True,
