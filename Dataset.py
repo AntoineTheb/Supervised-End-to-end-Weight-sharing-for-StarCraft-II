@@ -17,6 +17,7 @@ class Dataset:
     def load(self, path):
         print("Loading data...")
 
+        # TODO: load state length for each files
         valid_files = 0
         for f in os.listdir(path):
             if f.find(".npy") != -1:
