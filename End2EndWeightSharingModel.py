@@ -45,9 +45,10 @@ class End2EndWeightSharingModel:
         optimizer = Adam(lr=0.00001)
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy'], optimizer=optimizer)
 
-    def fit(self, x_observations, x_available_actions, y_taken_actions, y_attention_map, epochs):
-        self.model.fit([x_observations, x_available_actions], [y_taken_actions, y_attention_map], shuffle=True,
-                       epochs=epochs, batch_size=64, verbose=1, validation_split=0.2)
+    def fit(self, x_observations, x_available_actions, y_taken_actions, y_attention_positions, weights, epochs):
+        return self.model.fit([x_observations, x_available_actions], [y_taken_actions, y_attention_positions],
+                              shuffle=True, sample_weight=weights, validation_split=0.2,
+                              epochs=epochs, batch_size=64, verbose=1)
 
     def predict(self, input_batch):
         pred = self.model.predict(input_batch, batch_size=1, verbose=0)

@@ -1,7 +1,5 @@
 __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 
-import numpy as np
-
 from pysc2.agents import base_agent
 from pysc2.lib import actions
 from pysc2.lib import features
@@ -9,13 +7,17 @@ from pysc2.lib import features
 from End2EndWeightSharingModel import *
 
 np.random.seed(1234)
-_PLAYER_RELATIVE = features.SCREEN_FEATURES.player_relative.index
+_SCREEN_PLAYER_RELATIVE = features.SCREEN_FEATURES.player_relative.index
+_SCREEN_SELECTED = features.SCREEN_FEATURES.selected.index
+
 
 class TrainedAgent(base_agent.BaseAgent):
     def step(self, obs):
         super(TrainedAgent, self).step(obs)
 
-        observation = np.expand_dims(obs.observation["screen"][_PLAYER_RELATIVE], axis=3)
+        screens = [obs.observation["screen"][_SCREEN_PLAYER_RELATIVE],
+                   obs.observation["screen"][_SCREEN_SELECTED]]
+        observation = np.stack(screens, axis=2)
 
         output_size = len(actions.FUNCTIONS)
 
@@ -27,12 +29,15 @@ class TrainedAgent(base_agent.BaseAgent):
         action, position = self.model.predict(input_batch)
         y, x = np.unravel_index(position, obs.observation["screen"].shape[1:])
 
-        # if action in obs.observation["available_actions"]:
+        if action in obs.observation["available_actions"]:
             # print("action is available: ", action, x, y)
-        # else:
-        if action not in obs.observation["available_actions"]:
+            if action == 7:
+                print("select army")
+        else:
+            # if action not in obs.observation["available_actions"]:
+            print("action", action, "is not available")
             action = np.random.choice(obs.observation["available_actions"])
-            print("take random action")
+            print("action", action, "was produced")
 
         if action == actions.FUNCTIONS.no_op.id:
             params = []
@@ -48,17 +53,27 @@ class TrainedAgent(base_agent.BaseAgent):
 
         return actions.FunctionCall(action, params)
 
+
 class AgentRoaches(TrainedAgent):
     def __init__(self):
         base_agent.BaseAgent.__init__(self)
         self.model = End2EndWeightSharingModel()
         self.model.load("agent_roaches")
 
+
 class AgentBeacon(TrainedAgent):
     def __init__(self):
         base_agent.BaseAgent.__init__(self)
         self.model = End2EndWeightSharingModel()
         self.model.load("agent_beacon")
+
+
+class AgentMineral(TrainedAgent):
+    def __init__(self):
+        base_agent.BaseAgent.__init__(self)
+        self.model = End2EndWeightSharingModel()
+        self.model.load("agent_mineral")
+
 
 class AgentMinerals(TrainedAgent):
     def __init__(self):
