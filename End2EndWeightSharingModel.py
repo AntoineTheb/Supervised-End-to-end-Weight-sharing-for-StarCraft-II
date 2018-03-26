@@ -42,18 +42,20 @@ class End2EndWeightSharingModel:
 
         #optimizer = RMSprop(lr=0.0001, clipvalue=1.0)
         optimizer = Adam(lr=0.00001)
-        self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], optimizer=optimizer)
+        self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], #loss_weights=[14000, 1],
+                           optimizer=optimizer)
 
     def init_loaded_model(self):
         optimizer = Adam(lr=0.00001)
-        self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], optimizer=optimizer)
+        self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], #loss_weights=[14000, 1],
+                           optimizer=optimizer)
 
-    def fit(self, x_observations, x_available_actions, y_taken_actions, y_attention_positions, epochs, name):
+    def fit(self, x_observations, x_available_actions, y_taken_actions, y_attention_positions, weights, epochs, name):
         tb_callback = callbacks.TensorBoard(log_dir="./logs_{}".format(name), histogram_freq=2, batch_size=64,
                                             write_graph=True, write_grads=False, write_images=True, embeddings_freq=0,
                                             embeddings_layer_names=None, embeddings_metadata=None)
         self.model.fit([x_observations, x_available_actions], [y_taken_actions, y_attention_positions], shuffle=True,
-                       epochs=epochs, batch_size=64, verbose=1, callbacks=[tb_callback], validation_split=0.2)
+                       epochs=epochs, sample_weight=weights, batch_size=64, verbose=1, callbacks=[tb_callback], validation_split=0.2)
 
     def predict(self, input_batch):
         pred = self.model.predict(input_batch, batch_size=1, verbose=0)
