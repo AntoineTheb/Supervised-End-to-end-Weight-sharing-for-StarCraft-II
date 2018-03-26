@@ -36,17 +36,17 @@ class Dataset:
                     output_action[state[2]] = 1.0
                     self.output_actions.append(output_action)
 
-                    attention_map = np.zeros(np.shape(state[0])[0:2])
+                    attention_map = np.zeros(state[0][:,:,0].shape)
                     if np.shape(state[3]) == (2,):
-                        attention_map[state[3][1][0], state[3][1][1]] = 1
-                    self.output_params.append(attention_map)
+                        attention_map[tuple(state[3][1])] = 1
+                    self.output_params.append(attention_map.flatten())
 
         assert len(self.input_observations) == len(self.input_available_actions) == len(self.output_actions) == len(self.output_params)
 
         self.input_observations = np.array(self.input_observations)
         self.input_available_actions = np.array(self.input_available_actions)
         self.output_actions = np.array(self.output_actions)
-        self.output_params = np.expand_dims(np.array(self.output_params), axis=3).reshape(-1,7056)
+        self.output_params = np.array(self.output_params)
 
         print("input observations: ", np.shape(self.input_observations))
         print("input available actions ", np.shape(self.input_available_actions))
