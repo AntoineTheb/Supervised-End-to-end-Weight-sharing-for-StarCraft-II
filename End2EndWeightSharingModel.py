@@ -2,10 +2,11 @@ __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 
 import numpy as np
 
-from keras.layers import Dense, Conv2D, Input, Flatten, concatenate
+from keras.layers import Dense, Conv2D, Input, Flatten, concatenate, Dropout
 from keras.models import Sequential, Model
 from keras.optimizers import RMSprop, Adam
 from keras.models import model_from_json
+from keras import regularizers
 
 np.random.seed(1234)
 
@@ -15,13 +16,21 @@ class End2EndWeightSharingModel:
         self.model = None
 
     def init_model(self, image_input_shape, actions_input_shape, output_size):
+        # regularizer = regularizers.l2(0.001)
+        regularizer = None
+        use_dropout = False
+
         image_model = Sequential()
 
-        image_model.add(Conv2D(32, (8, 8), strides=(4, 4), activation='relu', input_shape=image_input_shape, padding='same'))
-        image_model.add(Conv2D(64, (4, 4), strides=(2, 2), activation='relu', padding='same'))
-        image_model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+        image_model.add(Conv2D(32, (8, 8), strides=(4, 4), activation='relu', input_shape=image_input_shape, padding='same', kernel_regularizer=regularizer))
+        if use_dropout: image_model.add(Dropout(0.1))
+        image_model.add(Conv2D(64, (4, 4), strides=(2, 2), activation='relu', padding='same', kernel_regularizer=regularizer))
+        if use_dropout: image_model.add(Dropout(0.4))
+        image_model.add(Conv2D(64, (3, 3), activation='relu', padding='same', kernel_regularizer=regularizer))
+        if use_dropout: image_model.add(Dropout(0.4))
         image_model.add(Flatten())
-        image_model.add(Dense(512, activation='relu'))
+        image_model.add(Dense(512, activation='relu', kernel_regularizer=regularizer))
+        if use_dropout: image_model.add(Dropout(0.4))
 
         visual_input = Input(shape=image_input_shape)
         encoded_image = image_model(visual_input)
@@ -29,13 +38,17 @@ class End2EndWeightSharingModel:
         contextual_input = Input(shape=actions_input_shape)
 
         action_decoder = concatenate([encoded_image, contextual_input])
-        action_decoder = Dense(1024, activation='relu')(action_decoder)
-        action_decoder = Dense(1024, activation='relu')(action_decoder)
-        action_decoder = Dense(output_size, activation='softmax')(action_decoder)
+        action_decoder = Dense(1024, activation='relu', kernel_regularizer=regularizer)(action_decoder)
+        if use_dropout: action_decoder = Dropout(0.1)(action_decoder)
+        action_decoder = Dense(1024, activation='relu', kernel_regularizer=regularizer)(action_decoder)
+        if use_dropout: action_decoder = Dropout(0.4)(action_decoder)
+        action_decoder = Dense(output_size, activation='softmax', kernel_regularizer=regularizer)(action_decoder)
 
-        regressor = Dense(512, activation='relu')(encoded_image)
-        regressor = Dense(128, activation='relu')(regressor)
-        regressor = Dense(2, activation='sigmoid')(regressor)
+        regressor = Dense(512, activation='relu', kernel_regularizer=regularizer)(encoded_image)
+        if use_dropout: regressor = Dropout(0.4)(regressor)
+        regressor = Dense(128, activation='relu', kernel_regularizer=regularizer)(regressor)
+        if use_dropout: regressor = Dropout(0.4)(regressor)
+        regressor = Dense(2, activation='sigmoid', kernel_regularizer=regularizer)(regressor)
 
         self.model = Model(inputs=[visual_input, contextual_input], outputs=[action_decoder, regressor])
 
