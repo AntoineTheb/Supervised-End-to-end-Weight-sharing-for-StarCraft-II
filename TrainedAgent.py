@@ -31,15 +31,15 @@ class TrainedAgent(base_agent.BaseAgent):
         x = int(screen_size * position[0])
         y = int(screen_size * position[1])
 
+        # print(action, "(", x, ",", y, ")")
         if action in obs.observation["available_actions"]:
             # print("action is available: ", action, x, y)
             if action == 7:
                 print("select army")
         else:
-            # if action not in obs.observation["available_actions"]:
-            print("action", action, "is not available")
-            action = np.random.choice(obs.observation["available_actions"])
-            print("action", action, "was produced")
+            random_action = np.random.choice(obs.observation["available_actions"])
+            print("action", action, "is not in available actions", obs.observation["available_actions"], "took random action", random_action)
+            action = random_action
 
         if action == actions.FUNCTIONS.no_op.id:
             params = []
