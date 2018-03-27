@@ -76,6 +76,13 @@ Train your own model:
 python train.py <beacon|mineral|roaches> <epochs>
 ```
 
+Open TensorBoard after training your model:
+```sh
+# run tensorboard 
+tensorboard --logdir=<path_to_project_directory>/logs_<mineral|beacon|roaches>
+```
+TensorBoard will return a url to enter into your browser.
+
 ## Citation
 If this work is useful to your research, please cite it as follows.
 
