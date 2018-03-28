@@ -75,6 +75,3 @@ class Dataset:
         print("output actions: ", np.shape(self.output_actions))
         print("output params: ", np.shape(self.output_params))
         print("weights: ", np.shape(self.weights))
-
-        print(self.output_actions[42000])
-        print(self.output_params[42000])
