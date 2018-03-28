@@ -64,9 +64,10 @@ python parseReplays.py --replays "D:\StarCraft II\Replays\DefeatRoaches\DefeatRo
 Or use Tony's scripted agents to generate data as they play:
 ```sh
 # generate training data using scripted agents
-# change variable GAME = "mineral|beacon|roaches" in ScriptedAgent.py (no argument sorry...)
-python -m pysc2.bin.agent --map MoveToBeacon --agent ScriptedAgent.ScriptedAgent --max_agent_steps 10000
-python -m pysc2.bin.agent --map CollectMineralShards --agent ScriptedAgent.ScriptedAgent --max_agent_steps 10000
+python -m pysc2.bin.agent --map MoveToBeacon --agent ScriptedAgent.AgentBeacon --max_agent_steps 10000
+python -m pysc2.bin.agent --map CollectMineralShard --agent ScriptedAgent.AgentMineral --max_agent_steps 10000
+python -m pysc2.bin.agent --map CollectMineralShards --agent ScriptedAgent.AgentMinerals --max_agent_steps 10000
+python -m pysc2.bin.agent --map DefeatRoaches --agent ScriptedAgent.AgentRoaches --max_agent_steps 10000
 ```
 
 Train your own model:
@@ -74,6 +75,13 @@ Train your own model:
 # train the model
 python train.py <beacon|mineral|roaches> <epochs>
 ```
+
+Open TensorBoard after training your model:
+```sh
+# run tensorboard 
+tensorboard --logdir=<path_to_project_directory>/logs_<mineral|beacon|roaches>
+```
+TensorBoard will return a url to enter into your browser.
 
 ## Citation
 If this work is useful to your research, please cite it as follows.

@@ -9,8 +9,6 @@ from pysc2.agents import base_agent
 from pysc2.lib import actions
 from pysc2.lib import features
 
-GAME = "roaches"  # beacon/mineral/minerals/roaches
-
 _SCREEN_PLAYER_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _SCREEN_SELECTED = features.SCREEN_FEATURES.selected.index
 _PLAYER_FRIENDLY = 1
@@ -25,11 +23,6 @@ _SELECT_ALL = [0]
 
 
 class ScriptedAgent(base_agent.BaseAgent):
-    def __init__(self):
-        base_agent.BaseAgent.__init__(self)
-
-        self.states = []
-
     def step(self, obs):
         super(ScriptedAgent, self).step(obs)
 
@@ -39,7 +32,7 @@ class ScriptedAgent(base_agent.BaseAgent):
                    obs.observation["screen"][_SCREEN_SELECTED]]
         observation = np.stack(screens, axis=2)
 
-        if GAME == "beacon":
+        if self.game == "beacon":
             if actions.FUNCTIONS.Move_screen.id in obs.observation["available_actions"]:
                 player_relative = obs.observation["screen"][_SCREEN_PLAYER_RELATIVE]
                 neutral_y, neutral_x = (player_relative == 3).nonzero()
@@ -55,7 +48,25 @@ class ScriptedAgent(base_agent.BaseAgent):
             else:
                 action = _SELECT_ARMY
                 params = [[0]]
-        elif GAME == "mineral":
+        elif self.game == "mineral":
+            if actions.FUNCTIONS.Move_screen.id in obs.observation["available_actions"]:
+                player_relative = obs.observation["screen"][_SCREEN_PLAYER_RELATIVE]
+                neutral_y, neutral_x = (player_relative == 3).nonzero()
+                player_y, player_x = (player_relative == 1).nonzero()
+                if not neutral_y.any() or not player_y.any():
+                    action = _NO_OP
+                    params = []
+                else:
+                    action = _MOVE_SCREEN
+                    index_x = np.argmin(neutral_x)
+                    index_y = np.argmin(neutral_y)
+                    index = index_x if neutral_x[index_x] + neutral_y[index_x] < neutral_x[index_y] + neutral_y[index_y] else index_y
+                    target = [neutral_x[index], neutral_y[index]]
+                    params = [[0], target]
+            else:
+                action = _SELECT_ARMY
+                params = [[0]]
+        elif self.game == "minerals":
             if actions.FUNCTIONS.Move_screen.id in obs.observation["available_actions"]:
                 player_relative = obs.observation["screen"][_SCREEN_PLAYER_RELATIVE]
                 neutral_y, neutral_x = (player_relative == 3).nonzero()
@@ -75,27 +86,7 @@ class ScriptedAgent(base_agent.BaseAgent):
             else:
                 action = _SELECT_ARMY
                 params = [[0]]
-        elif GAME == "minerals":
-            if actions.FUNCTIONS.Move_screen.id in obs.observation["available_actions"]:
-                player_relative = obs.observation["screen"][_SCREEN_PLAYER_RELATIVE]
-                neutral_y, neutral_x = (player_relative == 3).nonzero()
-                player_y, player_x = (player_relative == 1).nonzero()
-                if not neutral_y.any() or not player_y.any():
-                    action = _NO_OP
-                    params = []
-                else:
-                    player = [int(player_x.mean()), int(player_y.mean())]
-                    closest, min_dist = None, None
-                    for p in zip(neutral_x, neutral_y):
-                        dist = np.linalg.norm(np.array(player) - np.array(p))
-                        if not min_dist or dist < min_dist:
-                            closest, min_dist = p, dist
-                    action = _MOVE_SCREEN
-                    params = [[0], closest]
-            else:
-                action = _SELECT_ARMY
-                params = [[0]]
-        elif GAME == "roaches":
+        elif self.game == "roaches":
             if _ATTACK_SCREEN in obs.observation["available_actions"]:
                 player_relative = obs.observation["screen"][_SCREEN_PLAYER_RELATIVE]
                 roach_y, roach_x = (player_relative == _PLAYER_HOSTILE).nonzero()
@@ -119,8 +110,36 @@ class ScriptedAgent(base_agent.BaseAgent):
         if len(self.states) == 64:
             new_file_name = str(uuid.uuid1())
 
-            np.save("dataset_{}/{}".format(GAME, new_file_name), np.array(self.states))
+            np.save("dataset_{}/{}".format(self.game, new_file_name), np.array(self.states))
 
             self.states = []
 
         return actions.FunctionCall(action, params)
+
+
+class AgentRoaches(ScriptedAgent):
+    def __init__(self):
+        base_agent.BaseAgent.__init__(self)
+        self.game = "roaches"
+        self.states = []
+
+
+class AgentBeacon(ScriptedAgent):
+    def __init__(self):
+        base_agent.BaseAgent.__init__(self)
+        self.game = "beacon"
+        self.states = []
+
+
+class AgentMineral(ScriptedAgent):
+    def __init__(self):
+        base_agent.BaseAgent.__init__(self)
+        self.game = "mineral"
+        self.states = []
+
+
+class AgentMinerals(ScriptedAgent):
+    def __init__(self):
+        base_agent.BaseAgent.__init__(self)
+        self.game = "minerals"
+        self.states = []
