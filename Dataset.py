@@ -67,7 +67,7 @@ class Dataset:
         assert len(self.input_observations) == len(self.input_available_actions) == len(self.output_actions) == len(self.output_params)
 
         self.weights = np.ones(self.output_actions.shape[0])
-        self.weights[self.output_actions[:, 7] == 1.] = 2000
+        self.weights[self.output_actions[:, 7] == 1.] = (self.output_actions[:, 7] == 0).sum() / (self.output_actions[:, 7] == 1).sum()
         self.weights = [self.weights, np.ones(self.output_actions.shape[0])]
 
         print("input observations: ", np.shape(self.input_observations))
