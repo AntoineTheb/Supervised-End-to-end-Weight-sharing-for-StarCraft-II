@@ -1,3 +1,4 @@
+logs_*
 secret_config.sh
 
 *.DS_Store
