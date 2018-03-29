@@ -32,8 +32,9 @@ class Dataset:
 
         offset = 0
         for f in files:
-            print("Loading {}".format(f))
             for state in np.load(f):
+                if offset % 5000 == 0:
+                    print("Loading state {} of {}".format(offset, nbStates))
 
                 self.input_observations[offset] = state[0]
 
