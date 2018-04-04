@@ -2,35 +2,21 @@ __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 
 from pysc2.agents import base_agent
 from pysc2.lib import actions
-from pysc2.lib import features
 
 from End2EndWeightSharingModel import *
+from Data import State
 
 np.random.seed(1234)
-_SCREEN_PLAYER_RELATIVE = features.SCREEN_FEATURES.player_relative.index
-_SCREEN_SELECTED = features.SCREEN_FEATURES.selected.index
 
 
 class TrainedAgent(base_agent.BaseAgent):
     def step(self, obs):
         super(TrainedAgent, self).step(obs)
 
-        screens = [obs.observation["screen"][_SCREEN_PLAYER_RELATIVE],
-                   obs.observation["screen"][_SCREEN_SELECTED]]
-        observation = np.stack(screens, axis=2)
-
-        output_size = len(actions.FUNCTIONS)
-
-        available_actions = np.zeros(output_size)
-        for action_index in obs.observation["available_actions"]:
-            available_actions[action_index] = 1.0
-
-        input_batch = [np.array([observation]), np.array([available_actions])]
-        action, position = self.model.predict(input_batch)
-        y, x = np.unravel_index(position, obs.observation["screen"].shape[1:])
+        action, position = self.model.predict(State(obs).toDataline())
 
         if action in obs.observation["available_actions"]:
-            # print("action is available: ", action, x, y)
+            # print("action is available: ", action, position)
             if action == 7:
                 print("select army")
         else:
@@ -42,11 +28,11 @@ class TrainedAgent(base_agent.BaseAgent):
         if action == actions.FUNCTIONS.no_op.id:
             params = []
         elif action == actions.FUNCTIONS.Move_screen.id:
-            params = [[0], [x, y]]
+            params = [[0], position]
         elif action == actions.FUNCTIONS.select_army.id:
             params = [[0]]
         elif action == actions.FUNCTIONS.Attack_screen.id:
-            params = [[0], [x, y]]
+            params = [[0], position]
         else:
             params = [[np.random.randint(0, size) for size in arg.sizes] for arg in
                       self.action_spec.functions[action].args]

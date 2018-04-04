@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 
-from pysc2.lib import features, actions
-import numpy as np
-
-_SCREEN_PLAYER_RELATIVE = features.SCREEN_FEATURES.player_relative.index
-_SCREEN_SELECTED = features.SCREEN_FEATURES.selected.index
+from pysc2.lib import actions
+from Data import State
 
 
 class ObserverAgent():
@@ -15,12 +12,7 @@ class ObserverAgent():
         return self.states
 
     def step(self, time_step, action):
-        # we expand dims because keras wants 4 dims for convolutions
-        # observation = np.expand_dims(obs.observation["screen"][_SCREEN_PLAYER_RELATIVE], axis=3)
-        screens = [time_step.observation["screen"][_SCREEN_PLAYER_RELATIVE],
-                   time_step.observation["screen"][_SCREEN_SELECTED]]
-        observation = np.stack(screens, axis=2)
-        self.states.append(np.array([observation, time_step.observation["available_actions"], action.function, action.arguments]))
+        self.states.append(State(time_step, action))
 
 
 class NoNoOp(ObserverAgent):

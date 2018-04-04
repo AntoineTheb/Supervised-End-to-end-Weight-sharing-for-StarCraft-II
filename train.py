@@ -3,8 +3,8 @@ __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 
 import sys
 
-from Dataset import *
 from End2EndWeightSharingModel import *
+from Data import Dataset
 
 import os.path
 
@@ -25,16 +25,12 @@ dataset.load("dataset_{}".format(name))
 
 model = End2EndWeightSharingModel()
 
-image_input_shape = np.shape(dataset.input_observations)[1:]
-actions_input_shape = np.shape(dataset.output_actions)[1:]
-output_size = actions_input_shape[0]
-
 if os.path.isfile("bin/agent_{}.h5".format(name)) and os.path.isfile("bin/agent_{}.json".format(name)):
     model.load("agent_{}".format(name))
     model.init_loaded_model()
 else:
-    model.init_model(image_input_shape=image_input_shape, actions_input_shape=actions_input_shape, output_size=output_size)
+    model.init_model()
 
-training_results = model.fit(dataset.input_observations, dataset.input_available_actions, dataset.output_actions, dataset.output_params, dataset.weights, epochs, name)
+training_results = model.fit(dataset, epochs)
 # print(training_results.history)
 model.save("agent_{}".format(name))

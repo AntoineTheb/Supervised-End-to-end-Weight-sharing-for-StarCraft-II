@@ -12,6 +12,8 @@ import numpy as np
 
 import importlib
 
+from Data import Dataline
+
 FLAGS = flags.FLAGS
 flags.DEFINE_string("replays", None, "Replay files pattern (google glob.glob)")
 flags.DEFINE_string("datadir", "dataset", "Directory in which to put the data of the replays")
@@ -24,8 +26,8 @@ class ReplayEnv:
                  replay_file_path,
                  agent,
                  player_id=1,
-                 screen_size_px=(84, 84),
-                 minimap_size_px=(84, 84),
+                 screen_size_px=Dataline.IMAGE_SHAPE,
+                 minimap_size_px=Dataline.IMAGE_SHAPE,
                  discount=1.,
                  step_mul=8):
 

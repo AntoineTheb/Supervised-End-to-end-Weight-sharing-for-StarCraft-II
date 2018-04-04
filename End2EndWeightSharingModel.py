@@ -11,17 +11,19 @@ from keras import callbacks
 
 np.random.seed(1234)
 
+from Data import Dataline
+
 
 class End2EndWeightSharingModel:
     def __init__(self):
         self.model = None
 
-    def init_model(self, image_input_shape, actions_input_shape, output_size):
-        visual_input = Input(shape=image_input_shape)
-        contextual_input = Input(shape=actions_input_shape)
+    def init_model(self):
+        visual_input = Input(shape=Dataline.IMAGES_SHAPE)
+        contextual_input = Input(shape=Dataline.ACTION_SHAPE)
 
         image_model = Sequential()
-        image_model.add(Conv2D(4, (3, 3), activation='relu', padding='same', input_shape=image_input_shape))
+        image_model.add(Conv2D(4, (3, 3), activation='relu', padding='same', input_shape=Dataline.IMAGES_SHAPE))
         image_model.add(Conv2D(4, (3, 3), activation='relu', padding='same'))
         image_features = image_model(visual_input)
 
@@ -34,7 +36,7 @@ class End2EndWeightSharingModel:
         action_decoder = concatenate([encoded_image, contextual_input])
         action_decoder = Dense(1024, activation='relu')(action_decoder)
         action_decoder = Dense(1024, activation='relu')(action_decoder)
-        action_decoder = Dense(output_size, activation='softmax')(action_decoder)
+        action_decoder = Dense(Dataline.ACTION_SHAPE[0], activation='softmax')(action_decoder)
 
         self.model = Model(inputs=[visual_input, contextual_input], outputs=[action_decoder, attention_map])
 
@@ -46,21 +48,22 @@ class End2EndWeightSharingModel:
         optimizer = Adam(lr=0.00001)
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy'], optimizer=optimizer)
 
-    def fit(self, x_observations, x_available_actions, y_taken_actions, y_attention_positions, weights, epochs, name):
+    def fit(self, dataset, epochs):
         #tb_callback = callbacks.TensorBoard(log_dir="./logs_{}".format(name), histogram_freq=2, batch_size=64,
         #                                   write_graph=True, write_grads=False, write_images=True, embeddings_freq=0,
         #                                   embeddings_layer_names=None, embeddings_metadata=None)
-        self.model.fit([x_observations, x_available_actions], [y_taken_actions, y_attention_positions], shuffle=True,
-                       epochs=epochs, sample_weight=weights, batch_size=64, verbose=1, #callbacks=[tb_callback],
+        self.model.fit([dataset.image, dataset.available_actions], [dataset.actions, dataset.params], shuffle=True,
+                       epochs=epochs, sample_weight=dataset.weights, batch_size=64, verbose=1, #callbacks=[tb_callback],
                        validation_split=0.2)
 
-    def predict(self, input_batch):
-        pred = self.model.predict(input_batch, batch_size=1, verbose=0)
+    def predict(self, dataline):
+        pred = self.model.predict([np.array([dataline.image]), np.array([dataline.available_actions])], batch_size=1, verbose=0)
         action = np.argmax(pred[0][0])
         position = np.argmax(pred[1])
-        plt.imshow(pred[1].reshape(84,84), cmap='gray')
+        plt.imshow(pred[1].reshape(dataline.IMAGE_SHAPE), cmap='gray')
         plt.show()
-        return action, position
+        y, x = np.unravel_index(position, dataline.IMAGE_SHAPE)
+        return action, [x, y]
 
     def save(self, name):
         model_json = self.model.to_json()
