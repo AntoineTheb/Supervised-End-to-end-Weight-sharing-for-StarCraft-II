@@ -52,7 +52,7 @@ class End2EndWeightSharingModel:
         #tb_callback = callbacks.TensorBoard(log_dir="./logs_{}".format(name), histogram_freq=2, batch_size=64,
         #                                   write_graph=True, write_grads=False, write_images=True, embeddings_freq=0,
         #                                   embeddings_layer_names=None, embeddings_metadata=None)
-        self.model.fit([dataset.image, dataset.available_actions], [dataset.actions, dataset.params], shuffle=True,
+        self.model.fit([dataset.images, dataset.available_actions], [dataset.actions, dataset.params], shuffle=True,
                        epochs=epochs, sample_weight=dataset.weights, batch_size=64, verbose=1, #callbacks=[tb_callback],
                        validation_split=0.2)
 

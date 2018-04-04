@@ -114,7 +114,7 @@ class ReplayEnv:
 
             self._state = StepType.MID
 
-        np.save("{}/{}".format(FLAGS.datadir, self.replay_name), np.array(self.agent.getStates()))
+        np.savez_compressed("{}/{}".format(FLAGS.datadir, self.replay_name), states=np.array(self.agent.getStates()))
 
 
 def main(unused):

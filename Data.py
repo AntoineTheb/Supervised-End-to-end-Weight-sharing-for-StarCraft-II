@@ -60,11 +60,11 @@ class Dataset:
     def load(self, path):
         print("Loading data...")
 
-        files = glob.glob("{}/*.npy".format(path))
+        files = glob.glob("{}/*.npz".format(path))
 
         nbStates = 0
         for f in files:
-            states = np.load(f)
+            states = np.load(f)['states']
             nbStates += len(states)
 
         self.images = np.zeros((nbStates,) + Dataline.IMAGES_SHAPE)
@@ -74,7 +74,7 @@ class Dataset:
 
         offset = 0
         for f in files:
-            for state in np.load(f):
+            for state in np.load(f)['states']:
                 if offset % 5000 == 0:
                     print("Loading state {} of {}".format(offset, nbStates))
 
