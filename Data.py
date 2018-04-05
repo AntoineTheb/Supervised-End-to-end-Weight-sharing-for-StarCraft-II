@@ -32,7 +32,6 @@ class Dataline:
         plt.show()
 
 
-
 class State:
     def __init__(self, observation, action=None):
         self.screen_player_relative = observation["screen"][features.SCREEN_FEATURES.player_relative.index]
@@ -56,7 +55,7 @@ class State:
             dataline.action = oneHotAction
 
             oneHotPosition = np.zeros(self.screen_player_relative.shape)
-            if self.action.arguments[0][0] == 1:
+            if len(self.action.arguments) == 2:
                 oneHotPosition[tuple(self.action.arguments[1])] = 1
             dataline.param = oneHotPosition.flatten()
 

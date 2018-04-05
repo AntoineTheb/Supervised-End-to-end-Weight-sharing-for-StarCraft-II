@@ -21,7 +21,7 @@ flags.mark_flag_as_required("replays")
 flags.mark_flag_as_required("agent")
 
 class ReplayEnv:
-    def __init__(self, replay_file_path, agent, player_id=1, step_mul=8):
+    def __init__(self, replay_file_path, agent, player_id=1, step_mul=1):
         self.replay_name = basename(splitext(replay_file_path)[0])
 
         self.agent = agent
@@ -62,7 +62,6 @@ class ReplayEnv:
         _features = features.Features(self.controller.game_info())
 
         while True:
-            self.controller.step(self.step_mul)
             obs = self.controller.observe()
             agent_obs = _features.transform_obs(obs.observation)
 
@@ -74,6 +73,8 @@ class ReplayEnv:
 
             if obs.player_result:
                 break
+
+            self.controller.step(self.step_mul)
 
         np.savez_compressed("{}/{}".format(FLAGS.datadir, self.replay_name), states=np.array(self.agent.getStates()))
 
