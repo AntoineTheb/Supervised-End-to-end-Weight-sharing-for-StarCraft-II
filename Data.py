@@ -2,6 +2,7 @@ __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 
 import numpy as np
 import glob
+import matplotlib.pyplot as plt
 
 from pysc2.lib import features, actions
 
@@ -17,6 +18,19 @@ class Dataline:
         self.available_actions = None
         self.action = None
         self.param = None
+
+    def show(self):
+        plt.figure(figsize=(8, 8))
+        plt.subplot(2,2,1)
+        plt.imshow(self.image[:,:,0])
+        plt.title("player relative")
+
+        plt.subplot(2,2,2)
+        plt.imshow(self.image[:,:,1])
+        plt.title("selected")
+
+        plt.show()
+
 
 
 class State:
@@ -47,6 +61,22 @@ class State:
             dataline.param = oneHotPosition.flatten()
 
         return dataline
+
+    def show(self):
+        plt.figure(figsize=(8, 8))
+        plt.subplot(2, 2, 1)
+        plt.imshow(self.screen_player_relative)
+        plt.title("player relative")
+
+        plt.subplot(2, 2, 2)
+        plt.imshow(self.screen_selected)
+        plt.title("selected")
+
+        plt.subplot(2, 2, 3)
+        plt.axis('off')
+        plt.text(0, 0.5, "available actions\n{}\n\n\n\n{}".format(self.available_actions, self.action))
+
+        plt.show()
 
 
 class Dataset:
