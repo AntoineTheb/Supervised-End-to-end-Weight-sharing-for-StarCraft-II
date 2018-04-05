@@ -54,11 +54,9 @@ class ReplayEnv:
     @staticmethod
     def _valid_replay(info, ping):
         """Make sure the replay isn't corrupt, and is worth looking at."""
-        if (info.HasField("error") or
+        return not (info.HasField("error") or
                     info.base_build != ping.base_build or  # different game version
-                    info.game_duration_loops < 1000):
-            return False
-        return True
+                    info.game_duration_loops < 1000)
 
     def start(self):
         _features = features.Features(self.controller.game_info())
