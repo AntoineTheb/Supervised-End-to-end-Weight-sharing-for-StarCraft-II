@@ -16,7 +16,7 @@ from Data import Dataline, State
 FLAGS = flags.FLAGS
 flags.DEFINE_string("replays", None, "Replay files pattern (google glob.glob)")
 flags.DEFINE_string("datadir", "dataset", "Directory in which to put the data of the replays")
-flags.DEFINE_boolean("keepnoop", False, "Whether to keep no op actions or not.")
+flags.DEFINE_bool("keepnoop", False, "Whether to keep no op actions.")
 flags.mark_flag_as_required("replays")
 
 class ReplayEnv:
