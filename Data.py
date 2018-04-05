@@ -34,10 +34,10 @@ class Dataline:
 
 
 class State:
-    def __init__(self, obs, action=None):
-        self.screen_player_relative = obs.observation["screen"][features.SCREEN_FEATURES.player_relative.index]
-        self.screen_selected = obs.observation["screen"][features.SCREEN_FEATURES.selected.index]
-        self.available_actions = obs.observation["available_actions"]
+    def __init__(self, observation, action=None):
+        self.screen_player_relative = observation["screen"][features.SCREEN_FEATURES.player_relative.index]
+        self.screen_selected = observation["screen"][features.SCREEN_FEATURES.selected.index]
+        self.available_actions = observation["available_actions"]
         self.action = action
 
     def toDataline(self):

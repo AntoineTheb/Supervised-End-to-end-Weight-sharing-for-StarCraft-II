@@ -4,7 +4,6 @@ from absl import app, flags
 from s2clientprotocol import sc2api_pb2 as sc_pb
 from pysc2 import run_configs
 from pysc2.lib import actions, features, point
-from pysc2.env.environment import TimeStep, StepType
 from os.path import basename, splitext
 import os
 from glob import glob
@@ -22,24 +21,15 @@ flags.mark_flag_as_required("replays")
 flags.mark_flag_as_required("agent")
 
 class ReplayEnv:
-    def __init__(self,
-                 replay_file_path,
-                 agent,
-                 player_id=1,
-                 screen_size_px=Dataline.IMAGE_SHAPE,
-                 minimap_size_px=Dataline.IMAGE_SHAPE,
-                 discount=1.,
-                 step_mul=8):
+    def __init__(self, replay_file_path, agent, player_id=1, step_mul=8):
+        self.replay_name = basename(splitext(replay_file_path)[0])
 
         self.agent = agent
-        self.discount = discount
         self.step_mul = step_mul
 
         self.run_config = run_configs.get()
         self.sc2_proc = self.run_config.start()
         self.controller = self.sc2_proc.controller
-
-        self.replay_name = basename(splitext(replay_file_path)[0])
 
         replay_data = self.run_config.replay_data(replay_file_path)
         ping = self.controller.ping()
@@ -47,20 +37,13 @@ class ReplayEnv:
         if not self._valid_replay(info, ping):
             raise Exception("{} is not a valid replay file!".format(replay_file_path))
 
-        screen_size_px = point.Point(*screen_size_px)
-        minimap_size_px = point.Point(*minimap_size_px)
-        interface = sc_pb.InterfaceOptions(
-            raw=False, score=True,
-            feature_layer=sc_pb.SpatialCameraSetup(width=24))
-        screen_size_px.assign_to(interface.feature_layer.resolution)
-        minimap_size_px.assign_to(interface.feature_layer.minimap_resolution)
+        interface = sc_pb.InterfaceOptions(raw=False, score=True, feature_layer=sc_pb.SpatialCameraSetup(width=24))
+        point.Point(*Dataline.IMAGE_SHAPE).assign_to(interface.feature_layer.resolution)
+        point.Point(*Dataline.IMAGE_SHAPE).assign_to(interface.feature_layer.minimap_resolution)
 
         map_data = None
         if info.local_map_path:
             map_data = self.run_config.map_data(info.local_map_path)
-
-        self._episode_length = info.game_duration_loops
-        self._episode_steps = 0
 
         self.controller.start_replay(sc_pb.RequestStartReplay(
             replay_data=replay_data,
@@ -68,21 +51,13 @@ class ReplayEnv:
             options=interface,
             observed_player_id=player_id))
 
-        self._state = StepType.FIRST
-
     @staticmethod
     def _valid_replay(info, ping):
         """Make sure the replay isn't corrupt, and is worth looking at."""
         if (info.HasField("error") or
                     info.base_build != ping.base_build or  # different game version
                     info.game_duration_loops < 1000):
-            # Probably corrupt, or just not interesting.
             return False
-#   for p in info.player_info:
-#       if p.player_apm < 10 or p.player_mmr < 1000:
-#           # Low APM = player just standing around.
-#           # Low MMR = corrupt replay or player who is weak.
-#           return False
         return True
 
     def start(self):
@@ -93,26 +68,14 @@ class ReplayEnv:
             obs = self.controller.observe()
             agent_obs = _features.transform_obs(obs.observation)
 
-            if obs.player_result: # Episide over.
-                self._state = StepType.LAST
-                discount = 0
-            else:
-                discount = self.discount
-
-            self._episode_steps += self.step_mul
-
-            step = TimeStep(step_type=self._state, reward=0, discount=discount, observation=agent_obs)
-
             # Assume that there is 0 or 1 action by frame.
             if obs.actions:
-                self.agent.step(step, _features.reverse_action(obs.actions[0]))
+                self.agent.step(agent_obs, _features.reverse_action(obs.actions[0]))
             else:
-                self.agent.step(step, actions.FunctionCall(actions.FUNCTIONS.no_op.id, []))
+                self.agent.step(agent_obs, actions.FunctionCall(actions.FUNCTIONS.no_op.id, []))
 
             if obs.player_result:
                 break
-
-            self._state = StepType.MID
 
         np.savez_compressed("{}/{}".format(FLAGS.datadir, self.replay_name), states=np.array(self.agent.getStates()))
 

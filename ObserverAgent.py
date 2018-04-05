@@ -11,11 +11,11 @@ class ObserverAgent():
     def getStates(self):
         return self.states
 
-    def step(self, time_step, action):
-        self.states.append(State(time_step, action))
+    def step(self, observation, action):
+        self.states.append(State(observation, action))
 
 
 class NoNoOp(ObserverAgent):
-    def step(self, time_step, action):
+    def step(self, observation, action):
         if action.function != actions.FUNCTIONS.no_op.id:
-            super(NoNoOp, self).step(time_step, action)
+            super(NoNoOp, self).step(observation, action)
