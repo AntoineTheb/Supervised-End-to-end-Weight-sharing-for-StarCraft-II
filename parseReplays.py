@@ -11,20 +11,17 @@ import numpy as np
 
 import importlib
 
-from Data import Dataline
+from Data import Dataline, State
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("replays", None, "Replay files pattern (google glob.glob)")
 flags.DEFINE_string("datadir", "dataset", "Directory in which to put the data of the replays")
-flags.DEFINE_string("agent", None, "Path to an agent.")
+flags.DEFINE_boolean("keepnoop", False, "Whether to keep no op actions or not.")
 flags.mark_flag_as_required("replays")
-flags.mark_flag_as_required("agent")
 
 class ReplayEnv:
-    def __init__(self, replay_file_path, agent, player_id=1, step_mul=1):
+    def __init__(self, replay_file_path, player_id=1, step_mul=1):
         self.replay_name = basename(splitext(replay_file_path)[0])
-
-        self.agent = agent
         self.step_mul = step_mul
 
         self.run_config = run_configs.get()
@@ -60,6 +57,7 @@ class ReplayEnv:
 
     def start(self):
         _features = features.Features(self.controller.game_info())
+        states = []
 
         while True:
             obs = self.controller.observe()
@@ -67,22 +65,20 @@ class ReplayEnv:
 
             # Assume that there is 0 or 1 action by frame.
             if obs.actions:
-                self.agent.step(agent_obs, _features.reverse_action(obs.actions[0]))
-            else:
-                self.agent.step(agent_obs, actions.FunctionCall(actions.FUNCTIONS.no_op.id, []))
+                states.append(State(agent_obs, _features.reverse_action(obs.actions[0])))
+            elif FLAGS.keepnoop:
+                states.append(State(agent_obs, actions.FunctionCall(actions.FUNCTIONS.no_op.id, [])))
 
             if obs.player_result:
                 break
 
             self.controller.step(self.step_mul)
 
-        np.savez_compressed("{}/{}".format(FLAGS.datadir, self.replay_name), states=np.array(self.agent.getStates()))
+        np.savez_compressed("{}/{}".format(FLAGS.datadir, self.replay_name), states=np.array(states))
+
 
 
 def main(unused):
-    agent_module, agent_name = FLAGS.agent.rsplit(".", 1)
-    agent_cls = getattr(importlib.import_module(agent_module), agent_name)
-
     replays = glob(FLAGS.replays)
     if not replays:
         print("No replays found.")
@@ -99,7 +95,7 @@ def main(unused):
     print("\nParsing...")
     for r in replays:
         print(r)
-        env = ReplayEnv(r, agent_cls())
+        env = ReplayEnv(r)
         env.start()
 
 if __name__ == "__main__":
