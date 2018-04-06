@@ -53,21 +53,12 @@ python -m pysc2.bin.agent --map DefeatRoaches --agent TrainedAgent.DefeatRoaches
 You can parse replays as datasets using parseReplays.py
 ```sh
 # parse replays
-python parseReplays.py --replays <replayspattern> --agent <observer agent> --datadir <data directory>
+python parseReplays.py --replays <replayspattern> --datadir <data directory>
 
 # exemples
-python parseReplays.py --replays "D:\StarCraft II\Replays\DefeatRoaches\DefeatRoaches_*.SC2Replay" --agent ObserverAgent.NoNoOp --datadir dataset_roaches
+python parseReplays.py --replays "D:\StarCraft II\Replays\DefeatRoaches\DefeatRoaches_*.SC2Replay" --datadir dataset_roaches
 # default directory is dataset
-python parseReplays.py --replays "D:\StarCraft II\Replays\DefeatRoaches\DefeatRoaches_*.SC2Replay" --agent ObserverAgent.ObserverAgent
-```
-
-Or use Tony's scripted agents to generate data as they play:
-```sh
-# generate training data using scripted agents
-python -m pysc2.bin.agent --map MoveToBeacon --agent ScriptedAgent.AgentBeacon --max_agent_steps 10000
-python -m pysc2.bin.agent --map CollectMineralShard --agent ScriptedAgent.AgentMineral --max_agent_steps 10000
-python -m pysc2.bin.agent --map CollectMineralShards --agent ScriptedAgent.AgentMinerals --max_agent_steps 10000
-python -m pysc2.bin.agent --map DefeatRoaches --agent ScriptedAgent.AgentRoaches --max_agent_steps 10000
+python parseReplays.py --replays "D:\StarCraft II\Replays\DefeatRoaches\DefeatRoaches_*.SC2Replay"
 ```
 
 Train your own model:
