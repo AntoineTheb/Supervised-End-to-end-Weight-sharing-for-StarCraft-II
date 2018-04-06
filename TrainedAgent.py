@@ -13,7 +13,7 @@ class TrainedAgent(base_agent.BaseAgent):
     def step(self, obs):
         super(TrainedAgent, self).step(obs)
 
-        action, position = self.model.predict(State(obs).toDataline())
+        action, position = self.model.predict(State(obs.observation).toDataline())
 
         if action in obs.observation["available_actions"]:
             # print("action is available: ", action, position)
