@@ -1,5 +1,6 @@
 logs_*
 secret_config.sh
+dataset/
 
 *.DS_Store
 
