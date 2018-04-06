@@ -16,13 +16,11 @@ from Data import Dataline, State
 FLAGS = flags.FLAGS
 flags.DEFINE_string("replays", None, "Replay files pattern (google glob.glob)")
 flags.DEFINE_string("datadir", "dataset", "Directory in which to put the data of the replays")
-flags.DEFINE_bool("keepnoop", False, "Whether to keep no op actions.")
 flags.mark_flag_as_required("replays")
 
 class ReplayEnv:
-    def __init__(self, replay_file_path, player_id=1, step_mul=1):
+    def __init__(self, replay_file_path, player_id=1):
         self.replay_name = basename(splitext(replay_file_path)[0])
-        self.step_mul = step_mul
 
         self.run_config = run_configs.get()
         self.sc2_proc = self.run_config.start()
@@ -51,28 +49,26 @@ class ReplayEnv:
     @staticmethod
     def _valid_replay(info, ping):
         """Make sure the replay isn't corrupt, and is worth looking at."""
-        return not (info.HasField("error") or
-                    info.base_build != ping.base_build or  # different game version
-                    info.game_duration_loops < 1000)
+        return not (info.HasField("error") or info.base_build != ping.base_build)  # different game version
 
     def start(self):
         _features = features.Features(self.controller.game_info())
         states = []
 
+        # Pair the observation with the action of the next frame (result with cause).
+        obs = self.controller.observe()
         while True:
-            obs = self.controller.observe()
-            agent_obs = _features.transform_obs(obs.observation)
+            observation = _features.transform_obs(obs.observation)
 
-            # Assume that there is 0 or 1 action by frame.
+            self.controller.step(1)
+            obs = self.controller.observe()
+
+            # Assume that there is 0 or 1 action by frame and don't save frame without action.
             if obs.actions:
-                states.append(State(agent_obs, _features.reverse_action(obs.actions[0])))
-            elif FLAGS.keepnoop:
-                states.append(State(agent_obs, actions.FunctionCall(actions.FUNCTIONS.no_op.id, [])))
+                states.append(State(observation, _features.reverse_action(obs.actions[0])))
 
             if obs.player_result:
                 break
-
-            self.controller.step(self.step_mul)
 
         np.savez_compressed("{}/{}".format(FLAGS.datadir, self.replay_name), states=np.array(states))
 
