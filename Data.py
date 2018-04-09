@@ -3,13 +3,14 @@ __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
+from keras.utils import to_categorical
 
 from pysc2.lib import features, actions
 
 
 class Dataline:
     IMAGE_SHAPE = (84, 84)
-    IMAGES_SHAPE = IMAGE_SHAPE + (2,)
+    IMAGES_SHAPE = IMAGE_SHAPE + (7,)
     ACTION_SHAPE = (len(actions.FUNCTIONS),)
     PARAM_SHAPE = (np.prod(IMAGE_SHAPE),)
 
@@ -42,7 +43,9 @@ class State:
     def toDataline(self):
         dataline = Dataline()
 
-        dataline.image = np.stack([self.screen_player_relative, self.screen_selected], axis=2)
+        dataline.image = np.concatenate((to_categorical(self.screen_player_relative, 5),
+                                         to_categorical(self.screen_selected, 2)),
+                                        axis=2)
 
         manyHotActions = np.zeros(Dataline.ACTION_SHAPE)
         for action_index in self.available_actions:
