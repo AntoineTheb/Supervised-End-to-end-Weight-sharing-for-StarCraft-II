@@ -22,12 +22,32 @@ class Dataline:
 
     def show(self):
         plt.figure(figsize=(8, 8))
-        plt.subplot(2,2,1)
+        plt.subplot(3,3,1)
         plt.imshow(self.image[:,:,0])
-        plt.title("player relative")
+        plt.title("player relative - background")
 
-        plt.subplot(2,2,2)
+        plt.subplot(3,3,2)
         plt.imshow(self.image[:,:,1])
+        plt.title("player relative - self")
+
+        plt.subplot(3,3,3)
+        plt.imshow(self.image[:,:,2])
+        plt.title("player relative - allies")
+
+        plt.subplot(3,3,4)
+        plt.imshow(self.image[:,:,3])
+        plt.title("player relative - neutral")
+
+        plt.subplot(3,3,5)
+        plt.imshow(self.image[:,:,4])
+        plt.title("player relative - opponents")
+
+        plt.subplot(3,3,6)
+        plt.imshow(self.image[:,:,5])
+        plt.title("not selected")
+
+        plt.subplot(3,3,7)
+        plt.imshow(self.image[:,:,6])
         plt.title("selected")
 
         plt.show()
