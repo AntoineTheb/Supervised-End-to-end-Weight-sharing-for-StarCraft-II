@@ -10,7 +10,7 @@ from pysc2.lib import features, actions
 
 class Dataline:
     IMAGE_SHAPE = (84, 84)
-    IMAGES_SHAPE = IMAGE_SHAPE + (7,)
+    IMAGES_SHAPE = IMAGE_SHAPE + (5,)
     ACTION_SHAPE = (len(actions.FUNCTIONS),)
     PARAM_SHAPE = (np.prod(IMAGE_SHAPE),)
 
@@ -22,32 +22,25 @@ class Dataline:
 
     def show(self):
         plt.figure(figsize=(8, 8))
-        plt.subplot(3,3,1)
-        plt.imshow(self.image[:,:,0])
-        plt.title("player relative - background")
 
-        plt.subplot(3,3,2)
-        plt.imshow(self.image[:,:,1])
+        plt.subplot(2,3,1)
+        plt.imshow(self.image[:,:,0])
         plt.title("player relative - self")
 
-        plt.subplot(3,3,3)
-        plt.imshow(self.image[:,:,2])
+        plt.subplot(2,3,2)
+        plt.imshow(self.image[:,:,1])
         plt.title("player relative - allies")
 
-        plt.subplot(3,3,4)
-        plt.imshow(self.image[:,:,3])
+        plt.subplot(2,3,3)
+        plt.imshow(self.image[:,:,2])
         plt.title("player relative - neutral")
 
-        plt.subplot(3,3,5)
-        plt.imshow(self.image[:,:,4])
+        plt.subplot(2,3,4)
+        plt.imshow(self.image[:,:,3])
         plt.title("player relative - opponents")
 
-        plt.subplot(3,3,6)
-        plt.imshow(self.image[:,:,5])
-        plt.title("not selected")
-
-        plt.subplot(3,3,7)
-        plt.imshow(self.image[:,:,6])
+        plt.subplot(2,3,5)
+        plt.imshow(self.image[:,:,4])
         plt.title("selected")
 
         plt.show()
@@ -63,8 +56,8 @@ class State:
     def toDataline(self):
         dataline = Dataline()
 
-        dataline.image = np.concatenate((to_categorical(self.screen_player_relative, 5),
-                                         to_categorical(self.screen_selected, 2)),
+        dataline.image = np.concatenate((to_categorical(self.screen_player_relative, 5)[:,:,1:], # Not background
+                                         np.expand_dims(self.screen_selected, axis=2)),
                                         axis=2)
 
         manyHotActions = np.zeros(Dataline.ACTION_SHAPE)

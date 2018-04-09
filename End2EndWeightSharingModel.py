@@ -22,12 +22,10 @@ class End2EndWeightSharingModel:
         visual_input = Input(shape=Dataline.IMAGES_SHAPE)
         contextual_input = Input(shape=Dataline.ACTION_SHAPE)
 
-        image_features = Conv2D(16, (1, 1), activation='relu', padding='same')(visual_input)
-        image_features = Conv2D(16, (1, 1), activation='relu', padding='same')(image_features)
-        image_features = Conv2D(16, (1, 1), activation='relu', padding='same')(image_features)
-        image_features = Conv2D(4, (12, 12), activation='relu', padding='same')(image_features)
+        image_features = Conv2D(4, (3, 3), activation='relu', padding='same')(visual_input)
+        image_features = Conv2D(4, (3, 3), activation='relu', padding='same')(image_features)
 
-        attention_map = Conv2D(1, (1, 1), activation='relu', padding='same')(image_features)
+        attention_map = Conv2D(1, (3, 3), activation='relu', padding='same')(image_features)
         attention_map = Flatten()(attention_map)
         attention_map = Activation('softmax')(attention_map)
 
