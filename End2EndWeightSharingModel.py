@@ -8,6 +8,7 @@ from keras.optimizers import RMSprop, Adam
 from keras.models import model_from_json
 from matplotlib import pyplot as plt
 from keras import callbacks
+import keras.preprocessing.image as preprocessor
 
 np.random.seed(1234)
 
@@ -23,8 +24,8 @@ class End2EndWeightSharingModel:
         contextual_input = Input(shape=Dataline.ACTION_SHAPE)
 
         image_model = Sequential()
-        image_model.add(Conv2D(4, (3, 3), activation='relu', padding='same', input_shape=Dataline.IMAGES_SHAPE))
-        image_model.add(Conv2D(4, (3, 3), activation='relu', padding='same'))
+        image_model.add(Conv2D(8, (3, 3), activation='relu', padding='same', input_shape=Dataline.IMAGES_SHAPE))
+        image_model.add(Conv2D(8, (3, 3), activation='relu', padding='same'))
         image_features = image_model(visual_input)
 
         attention_map = (Conv2D(1, (3, 3), padding='same'))(image_features)
@@ -48,13 +49,22 @@ class End2EndWeightSharingModel:
         optimizer = Adam(lr=0.00001)
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy'], optimizer=optimizer)
 
-    def fit(self, dataset, epochs):
+    def fit(self, dataset, epochs, transformDataset=False):
         #tb_callback = callbacks.TensorBoard(log_dir="./logs_{}".format(name), histogram_freq=2, batch_size=64,
         #                                   write_graph=True, write_grads=False, write_images=True, embeddings_freq=0,
         #                                   embeddings_layer_names=None, embeddings_metadata=None)
-        self.model.fit([dataset.images, dataset.available_actions], [dataset.actions, dataset.params], shuffle=True,
-                       epochs=epochs, sample_weight=dataset.weights, batch_size=64, verbose=1, #callbacks=[tb_callback],
-                       validation_split=0.2)
+
+        if(transformDataset):
+            generator = self.genflow(dataset, True, True, True, True)
+            self.model.fit_generator(generator, shuffle=True,
+                                     epochs=epochs, verbose=1,
+                                     # callbacks=[tb_callback],
+                                     steps_per_epoch=len(dataset.images) / 64
+                                     )
+        else:
+            self.model.fit([dataset.images, dataset.available_actions], [dataset.actions, dataset.params], shuffle=True,
+                           epochs=epochs, sample_weight=dataset.weights, batch_size=64, verbose=1, #callbacks=[tb_callback],
+                           validation_split=0.2)
 
     def predict(self, dataline):
         pred = self.model.predict([np.array([dataline.image]), np.array([dataline.available_actions])], batch_size=1, verbose=0)
@@ -64,6 +74,28 @@ class End2EndWeightSharingModel:
         plt.show()
         y, x = np.unravel_index(position, dataline.IMAGE_SHAPE)
         return action, [x, y]
+
+    def genflow(self, dataset, centered, normalize, horizontalFlip, verticalFlip):
+        datagen = preprocessor.ImageDataGenerator(
+            featurewise_center=centered,
+            featurewise_std_normalization=normalize,
+            horizontal_flip=horizontalFlip,
+            rotation_range=20,
+            width_shift_range=0.2,
+            height_shift_range=0.2,
+            vertical_flip=verticalFlip)
+
+
+        genImage = datagen.flow(dataset.images, dataset.params, batch_size=32, seed =7)
+        genActionAvailable = datagen.flow(dataset.images, dataset.available_actions, batch_size=32, seed=7)
+        genAction = datagen.flow(dataset.images, dataset.actions, batch_size=32, seed=7)
+
+        while True:
+            image = genImage.next()
+            availaction = genActionAvailable.next()
+            action = genAction.next()
+
+            yield[image[0], availaction[1]], [action[1], image[1]]
 
     def save(self, name):
         model_json = self.model.to_json()
