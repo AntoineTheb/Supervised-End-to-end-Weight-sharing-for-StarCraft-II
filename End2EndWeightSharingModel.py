@@ -2,12 +2,11 @@ __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 
 import numpy as np
 
-from keras.layers import Dense, Conv2D, Input, Flatten, concatenate, Activation
+from keras.layers import Dense, Conv2D, Input, Flatten, concatenate, Activation, ConvLSTM2D, LSTM, Reshape
 from keras.models import Sequential, Model
 from keras.optimizers import RMSprop, Adam
 from keras.models import model_from_json
 from matplotlib import pyplot as plt
-from keras import callbacks
 
 np.random.seed(1234)
 
@@ -17,21 +16,23 @@ class End2EndWeightSharingModel:
         self.model = None
 
     def init_model(self, image_input_shape, actions_input_shape, output_size):
-        visual_input = Input(shape=image_input_shape)
-        contextual_input = Input(shape=actions_input_shape)
+        visual_input = Input(shape=(None, 84,84,2))
+        contextual_input = Input(shape=(None,524))
 
         image_model = Sequential()
-        image_model.add(Conv2D(4, (3, 3), activation='relu', padding='same', input_shape=image_input_shape))
-        image_model.add(Conv2D(4, (3, 3), activation='relu', padding='same'))
+        image_model.add(ConvLSTM2D(4, (3, 3), activation='relu', padding='same', input_shape=(None, 84,84,2), return_sequences=True))
+        image_model.add(ConvLSTM2D(4, (3, 3), activation='relu', padding='same'))
         image_features = image_model(visual_input)
 
         attention_map = (Conv2D(1, (3, 3), padding='same'))(image_features)
+        print(attention_map)
         attention_map = Flatten()(attention_map)
+        print(attention_map)
         attention_map = Activation('softmax')(attention_map)
 
         encoded_image = Flatten()(image_features)
-        encoded_image = Dense(512, activation='relu')(encoded_image)
-        action_decoder = concatenate([encoded_image, contextual_input])
+        action_decoder = LSTM(512, activation='relu')(contextual_input)
+        action_decoder = concatenate([encoded_image, action_decoder])
         action_decoder = Dense(1024, activation='relu')(action_decoder)
         action_decoder = Dense(1024, activation='relu')(action_decoder)
         action_decoder = Dense(output_size, activation='softmax')(action_decoder)
@@ -46,18 +47,17 @@ class End2EndWeightSharingModel:
         optimizer = Adam(lr=0.00001)
         self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy'], optimizer=optimizer)
 
-    def fit(self, x_observations, x_available_actions, y_taken_actions, y_attention_positions, weights, epochs, name):
-        tb_callback = callbacks.TensorBoard(log_dir="./logs_{}".format(name), histogram_freq=2, batch_size=64,
-                                            write_graph=True, write_grads=False, write_images=True, embeddings_freq=0,
-                                            embeddings_layer_names=None, embeddings_metadata=None)
-        self.model.fit([x_observations, x_available_actions], [y_taken_actions, y_attention_positions], shuffle=True,
-                       epochs=epochs, sample_weight=weights, batch_size=64, verbose=1, callbacks=[tb_callback],
-                       validation_split=0.2)
+    def fit(self, x_observations, x_available_actions, y_taken_actions, y_attention_positions, epochs):
+        return self.model.fit([x_observations, x_available_actions], [y_taken_actions, y_attention_positions],
+                              shuffle=True, validation_split=0.2,
+                              epochs=epochs, batch_size=4, verbose=1)
 
     def predict(self, input_batch):
         pred = self.model.predict(input_batch, batch_size=1, verbose=0)
+
         action = np.argmax(pred[0][0])
         position = np.argmax(pred[1])
+        print(action)
         plt.imshow(pred[1].reshape(84,84), cmap='gray')
         plt.show()
         return action, position
