@@ -25,30 +25,31 @@ class Dataline:
 
         plt.subplot(2,3,1)
         plt.imshow(self.image[:,:,0])
-        plt.title("player relative - self")
+        plt.title("unit type - banelings")
 
         plt.subplot(2,3,2)
         plt.imshow(self.image[:,:,1])
-        plt.title("player relative - allies")
+        plt.title("unit type - marines")
 
         plt.subplot(2,3,3)
         plt.imshow(self.image[:,:,2])
-        plt.title("player relative - neutral")
+        plt.title("unit type - zerglings")
 
         plt.subplot(2,3,4)
         plt.imshow(self.image[:,:,3])
-        plt.title("player relative - opponents")
+        plt.title("selected")
 
         plt.subplot(2,3,5)
         plt.imshow(self.image[:,:,4])
-        plt.title("selected")
+        plt.title("unit_hit_point_ratio")
 
         plt.show()
 
 
 class State:
     def __init__(self, observation, action=None):
-        self.screen_player_relative = observation["screen"][features.SCREEN_FEATURES.player_relative.index]
+        self.screen_unit_type = observation["screen"][features.SCREEN_FEATURES.unit_type.index]
+        self.screen_unit_hit_point_ratio = observation["screen"][features.SCREEN_FEATURES.unit_hit_points_ratio.index]
         self.screen_selected = observation["screen"][features.SCREEN_FEATURES.selected.index]
         self.available_actions = observation["available_actions"]
         self.action = action
@@ -56,8 +57,13 @@ class State:
     def toDataline(self):
         dataline = Dataline()
 
-        dataline.image = np.concatenate((to_categorical(self.screen_player_relative, 5)[:,:,1:], # Not background
-                                         np.expand_dims(self.screen_selected, axis=2)),
+        unit_type = self.screen_unit_type
+        unit_type[unit_type == 9] = 1
+        unit_type[unit_type == 48] = 2
+        unit_type[unit_type == 105] = 3
+        dataline.image = np.concatenate((to_categorical(unit_type, 4)[:,:,1:], # Not background
+                                         np.expand_dims(self.screen_selected, axis=2),
+                                         np.expand_dims(self.screen_unit_hit_point_ratio, axis=2)),
                                         axis=2)
 
         manyHotActions = np.zeros(Dataline.ACTION_SHAPE)
@@ -70,7 +76,7 @@ class State:
             oneHotAction[self.action.function] = 1.0
             dataline.action = oneHotAction
 
-            oneHotPosition = np.zeros(self.screen_player_relative.shape)
+            oneHotPosition = np.zeros(self.screen_selected.shape)
             if len(self.action.arguments) == 2:
                 oneHotPosition[tuple(self.action.arguments[1])] = 1
             dataline.param = oneHotPosition.flatten()

@@ -66,3 +66,9 @@ class AgentMinerals(TrainedAgent):
         base_agent.BaseAgent.__init__(self)
         self.model = End2EndWeightSharingModel()
         self.model.load("agent_minerals")
+
+class AgentZerglings(TrainedAgent):
+    def __init__(self):
+        base_agent.BaseAgent.__init__(self)
+        self.model = End2EndWeightSharingModel()
+        self.model.load("agent_zerglings")
