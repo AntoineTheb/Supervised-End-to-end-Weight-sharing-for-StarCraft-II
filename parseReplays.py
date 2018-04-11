@@ -56,16 +56,22 @@ class ReplayEnv:
         states = []
 
         # Pair the observation with the action of the next frame (result with cause).
+        # The following is a hack to approximate that Command Center plays only one action at a time.
         obs = self.controller.observe()
+        observation = _features.transform_obs(obs.observation)
+        self.controller.step(1) # Skip select all
+        self.controller.observe() # Skip select all
         while True:
-            observation = _features.transform_obs(obs.observation)
-
             self.controller.step(1)
             obs = self.controller.observe()
+            futureObservation = _features.transform_obs(obs.observation)
 
             # Assume that there is 0 or 1 action by frame and don't save frame without action.
-            if obs.actions:
+            if len(obs.actions) == 4:
                 states.append(State(observation, _features.reverse_action(obs.actions[0])))
+                states.append(State(futureObservation, _features.reverse_action(obs.actions[1])))
+
+            observation = futureObservation
 
             if obs.player_result:
                 break
