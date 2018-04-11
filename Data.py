@@ -83,22 +83,6 @@ class State:
 
         return dataline
 
-    def show(self):
-        plt.figure(figsize=(8, 8))
-        plt.subplot(2, 2, 1)
-        plt.imshow(self.screen_player_relative)
-        plt.title("player relative")
-
-        plt.subplot(2, 2, 2)
-        plt.imshow(self.screen_selected)
-        plt.title("selected")
-
-        plt.subplot(2, 2, 3)
-        plt.axis('off')
-        plt.text(0, 0.5, "available actions\n{}\n\n\n\n{}".format(self.available_actions, self.action))
-
-        plt.show()
-
 
 class Dataset:
     def __init__(self):
