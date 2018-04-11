@@ -34,20 +34,24 @@ class End2EndWeightSharingModel:
 
         encoded_image = Flatten()(image_features)
         encoded_image = Dense(512, activation='relu')(encoded_image)
+
         action_decoder = concatenate([encoded_image, contextual_input])
         action_decoder = Dense(1024, activation='relu')(action_decoder)
         action_decoder = Dense(1024, activation='relu')(action_decoder)
-        action_decoder = Dense(Dataline.ACTION_SHAPE[0], activation='softmax')(action_decoder)
 
-        self.model = Model(inputs=[visual_input, contextual_input], outputs=[action_decoder, attention_map])
+        pi = Dense(Dataline.ACTION_SHAPE[0], activation='softmax')(action_decoder)
+
+        v = Dense(1, name='v')(action_decoder)
+
+        self.model = Model(inputs=[visual_input, contextual_input], outputs=[pi, v, attention_map])
 
         #optimizer = RMSprop(lr=0.0001, clipvalue=1.0)
         optimizer = Adam(lr=0.00001)
-        self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy'], optimizer=optimizer)
+        self.model.compile(loss=['categorical_crossentropy', 'mse', 'categorical_crossentropy'], optimizer=optimizer)
 
     def init_loaded_model(self):
         optimizer = Adam(lr=0.00001)
-        self.model.compile(loss=['categorical_crossentropy', 'categorical_crossentropy'], optimizer=optimizer)
+        self.model.compile(loss=['categorical_crossentropy', 'mse', 'categorical_crossentropy'], optimizer=optimizer)
 
     def fit(self, dataset, epochs, transformDataset=False):
         #tb_callback = callbacks.TensorBoard(log_dir="./logs_{}".format(name), histogram_freq=2, batch_size=64,
@@ -62,15 +66,15 @@ class End2EndWeightSharingModel:
                                      steps_per_epoch=len(dataset.images) / 64
                                      )
         else:
-            self.model.fit([dataset.images, dataset.available_actions], [dataset.actions, dataset.params], shuffle=True,
+            self.model.fit([dataset.images, dataset.available_actions], [dataset.actions, dataset.values, dataset.params], shuffle=True,
                            epochs=epochs, sample_weight=dataset.weights, batch_size=64, verbose=1, #callbacks=[tb_callback],
                            validation_split=0.2)
 
     def predict(self, dataline):
         pred = self.model.predict([np.array([dataline.image]), np.array([dataline.available_actions])], batch_size=1, verbose=0)
         action = np.argmax(pred[0][0])
-        position = np.argmax(pred[1])
-        plt.imshow(pred[1].reshape(dataline.IMAGE_SHAPE), cmap='gray')
+        position = np.argmax(pred[2])
+        plt.imshow(pred[2].reshape(dataline.IMAGE_SHAPE), cmap='gray')
         plt.show()
         y, x = np.unravel_index(position, dataline.IMAGE_SHAPE)
         return action, [x, y]

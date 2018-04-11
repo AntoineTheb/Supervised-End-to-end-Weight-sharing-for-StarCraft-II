@@ -11,6 +11,7 @@ class Dataline:
     IMAGE_SHAPE = (84, 84)
     IMAGES_SHAPE = IMAGE_SHAPE + (2,)
     ACTION_SHAPE = (len(actions.FUNCTIONS),)
+    VALUE_SHAPE = (1,)
     PARAM_SHAPE = (np.prod(IMAGE_SHAPE),)
 
     def __init__(self):
@@ -83,6 +84,7 @@ class Dataset:
         self.images = None
         self.available_actions = None
         self.actions = None
+        self.values = None
         self.params = None
         self.weights = None
 
@@ -99,6 +101,7 @@ class Dataset:
         self.images = np.zeros((nbStates,) + Dataline.IMAGES_SHAPE)
         self.available_actions = np.zeros((nbStates,) + Dataline.ACTION_SHAPE)
         self.actions = np.zeros((nbStates,) + Dataline.ACTION_SHAPE)
+        self.values = np.zeros((nbStates,) + Dataline.VALUE_SHAPE)
         self.params = np.zeros((nbStates,) + Dataline.PARAM_SHAPE)
 
         offset = 0
@@ -119,10 +122,11 @@ class Dataset:
 
         self.weights = np.ones(self.actions.shape[0])
         self.weights[self.actions[:, 7] == 1.] = (self.actions[:, 7] == 0).sum() / (self.actions[:, 7] == 1).sum()
-        self.weights = [self.weights, np.ones(self.actions.shape[0])]
+        self.weights = [self.weights, np.ones(self.actions.shape[0]), np.ones(self.actions.shape[0])]
 
         print("input observations: ", np.shape(self.images))
         print("input available actions ", np.shape(self.available_actions))
         print("output actions: ", np.shape(self.actions))
+        print("output values: ", np.shape(self.values))
         print("output params: ", np.shape(self.params))
         print("weights: ", np.shape(self.weights))
