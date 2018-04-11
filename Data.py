@@ -11,8 +11,9 @@ from pysc2.lib import features, actions
 class Dataline:
     IMAGE_SHAPE = (84, 84)
     IMAGES_SHAPE = IMAGE_SHAPE + (5,)
-    ACTION_SHAPE = (len(actions.FUNCTIONS),)
-    PARAM_SHAPE = (np.prod(IMAGE_SHAPE),)
+    PARAM_SHAPE = IMAGE_SHAPE + (3,)
+    actionToIndex = {2:0, 12:1, 331:2}  # select point, attack screen, move screen
+    indexToAction = {0:2, 1:12, 2:331}
 
     def __init__(self):
         self.image = None
@@ -66,20 +67,11 @@ class State:
                                          np.expand_dims(self.screen_unit_hit_point_ratio, axis=2)),
                                         axis=2)
 
-        manyHotActions = np.zeros(Dataline.ACTION_SHAPE)
-        for action_index in self.available_actions:
-            manyHotActions[action_index] = 1.0
-        dataline.available_actions = manyHotActions
-
         if self.action:
-            oneHotAction = np.zeros(Dataline.ACTION_SHAPE)
-            oneHotAction[self.action.function] = 1.0
-            dataline.action = oneHotAction
-
-            oneHotPosition = np.zeros(self.screen_selected.shape)
-            if len(self.action.arguments) == 2:
-                oneHotPosition[tuple(self.action.arguments[1])] = 1
-            dataline.param = oneHotPosition.flatten()
+            assert len(self.action.arguments) == 2
+            one_hot_position = np.zeros(Dataline.PARAM_SHAPE)
+            one_hot_position[tuple(self.action.arguments[1]) + (Dataline.actionToIndex[self.action.function],)] = 1
+            dataline.param = one_hot_position
 
         return dataline
 
