@@ -3,13 +3,14 @@ __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
+from keras.utils import to_categorical
 
 from pysc2.lib import features, actions
 
 
 class Dataline:
     IMAGE_SHAPE = (84, 84)
-    IMAGES_SHAPE = IMAGE_SHAPE + (2,)
+    IMAGES_SHAPE = IMAGE_SHAPE + (5,)
     ACTION_SHAPE = (len(actions.FUNCTIONS),)
     PARAM_SHAPE = (np.prod(IMAGE_SHAPE),)
 
@@ -21,12 +22,25 @@ class Dataline:
 
     def show(self):
         plt.figure(figsize=(8, 8))
-        plt.subplot(2,2,1)
-        plt.imshow(self.image[:,:,0])
-        plt.title("player relative")
 
-        plt.subplot(2,2,2)
+        plt.subplot(2,3,1)
+        plt.imshow(self.image[:,:,0])
+        plt.title("player relative - self")
+
+        plt.subplot(2,3,2)
         plt.imshow(self.image[:,:,1])
+        plt.title("player relative - allies")
+
+        plt.subplot(2,3,3)
+        plt.imshow(self.image[:,:,2])
+        plt.title("player relative - neutral")
+
+        plt.subplot(2,3,4)
+        plt.imshow(self.image[:,:,3])
+        plt.title("player relative - opponents")
+
+        plt.subplot(2,3,5)
+        plt.imshow(self.image[:,:,4])
         plt.title("selected")
 
         plt.show()
@@ -42,7 +56,9 @@ class State:
     def toDataline(self):
         dataline = Dataline()
 
-        dataline.image = np.stack([self.screen_player_relative, self.screen_selected], axis=2)
+        dataline.image = np.concatenate((to_categorical(self.screen_player_relative, 5)[:,:,1:], # Not background
+                                         np.expand_dims(self.screen_selected, axis=2)),
+                                        axis=2)
 
         manyHotActions = np.zeros(Dataline.ACTION_SHAPE)
         for action_index in self.available_actions:
