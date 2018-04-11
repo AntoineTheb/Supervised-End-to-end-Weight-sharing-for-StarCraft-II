@@ -124,7 +124,7 @@ class Dataset:
         assert len(self.images) == len(self.available_actions) == len(self.actions) == len(self.params)
 
         self.weights = np.ones(self.actions.shape[0])
-        self.weights[self.actions[:, 7] == 1.] = (self.actions[:, 7] == 0).sum() / (self.actions[:, 7] == 1).sum()
+        self.weights[self.actions[:, 7] == 1.] = 0
         self.weights = [self.weights, np.ones(self.actions.shape[0])]
 
         print("input observations: ", np.shape(self.images))
