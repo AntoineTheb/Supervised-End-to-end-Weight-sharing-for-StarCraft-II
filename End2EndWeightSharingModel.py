@@ -2,12 +2,12 @@ __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 
 import numpy as np
 
-from keras.layers import Dense, Conv2D, Input, Flatten, concatenate, Activation
+from keras.layers import Dense, Conv2D, Input, Flatten, concatenate, Activation, Lambda, Multiply
 from keras.models import Sequential, Model
 from keras.optimizers import RMSprop, Adam
 from keras.models import model_from_json
 from matplotlib import pyplot as plt
-from keras import callbacks
+import keras.backend as k
 import keras.preprocessing.image as preprocessor
 
 np.random.seed(1234)
@@ -40,10 +40,11 @@ class End2EndWeightSharingModel:
         action_decoder = Dense(1024, activation='relu')(action_decoder)
 
         pi = Dense(Dataline.ACTION_SHAPE[0], activation='softmax')(action_decoder)
-
+        pi_masked = Multiply()([pi, contextual_input])
+        pi_normalized = Lambda(lambda x: x / k.sum(x, axis=1, keepdims=True), name='pi')(pi_masked)
         v = Dense(1, name='v')(action_decoder)
 
-        self.model = Model(inputs=[visual_input, contextual_input], outputs=[pi, v, attention_map])
+        self.model = Model(inputs=[visual_input, contextual_input], outputs=[pi_normalized, v, attention_map])
 
         #optimizer = RMSprop(lr=0.0001, clipvalue=1.0)
         optimizer = Adam(lr=0.00001)
