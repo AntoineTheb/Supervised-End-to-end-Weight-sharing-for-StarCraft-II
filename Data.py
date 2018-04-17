@@ -3,6 +3,7 @@ __author__ = 'Tony Beltramelli - www.tonybeltramelli.com'
 import numpy as np
 import glob
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 from keras.utils import to_categorical
 
 from pysc2.lib import features, actions
@@ -23,25 +24,38 @@ class Dataline:
     def show(self):
         plt.figure(figsize=(8, 8))
 
-        plt.subplot(2,3,1)
+        plt.subplot(3,3,1)
         plt.imshow(self.image[:,:,0])
         plt.title("unit type - banelings")
 
-        plt.subplot(2,3,2)
+        plt.subplot(3,3,2)
         plt.imshow(self.image[:,:,1])
         plt.title("unit type - marines")
 
-        plt.subplot(2,3,3)
+        plt.subplot(3,3,3)
         plt.imshow(self.image[:,:,2])
         plt.title("unit type - zerglings")
 
-        plt.subplot(2,3,4)
+        plt.subplot(3,3,4)
         plt.imshow(self.image[:,:,3])
         plt.title("selected")
 
-        plt.subplot(2,3,5)
+        plt.subplot(3,3,5)
         plt.imshow(self.image[:,:,4])
         plt.title("unit_hit_point_ratio")
+
+        if self.param is not None:
+            plt.subplot(3,3,6)
+            plt.imshow(self.param[:,:,0], cmap=cm.gray, vmin=0, vmax=1)
+            plt.title("select point")
+
+            plt.subplot(3,3,7)
+            plt.imshow(self.param[:,:,1], cmap=cm.gray, vmin=0, vmax=1)
+            plt.title("attack screen")
+
+            plt.subplot(3,3,8)
+            plt.imshow(self.param[:,:,2], cmap=cm.gray, vmin=0, vmax=1)
+            plt.title("move screen")
 
         plt.show()
 
@@ -69,7 +83,7 @@ class State:
         if self.action:
             one_hot_position = np.zeros(Dataline.PARAM_SHAPE)
             if self.action.function in [2, 12, 331]:
-                one_hot_position[tuple(self.action.arguments[1]) + (Dataline.actionToIndex[self.action.function],)] = 1
+                one_hot_position[tuple(self.action.arguments[1])[::-1] + (Dataline.actionToIndex[self.action.function],)] = 1
                 dataline.weight = 1
             else:
                 dataline.weight = 0
