@@ -15,27 +15,13 @@ class TrainedAgent(base_agent.BaseAgent):
 
         action, position = self.model.predict(State(obs.observation).toDataline())
 
-        if action in obs.observation["available_actions"]:
-            # print("action is available: ", action, position)
-            if action == 7:
-                print("select army")
+        if action in Dataline.actionToIndex and action in obs.observation["available_actions"]:
+            print("took available action:", actions.FUNCTIONS[action].name)
+            params = [[0], position]
         else:
-            # if action not in obs.observation["available_actions"]:
-            print("action", action, "is not available")
-            action = np.random.choice(obs.observation["available_actions"])
-            print("action", action, "was produced")
-
-        if action == actions.FUNCTIONS.no_op.id:
+            print("took not available action:", actions.FUNCTIONS[action].name, "; changed for no_op!")
+            action = actions.FUNCTIONS.no_op.id
             params = []
-        elif action == actions.FUNCTIONS.Move_screen.id:
-            params = [[0], position]
-        elif action == actions.FUNCTIONS.select_army.id:
-            params = [[0]]
-        elif action == actions.FUNCTIONS.Attack_screen.id:
-            params = [[0], position]
-        else:
-            params = [[np.random.randint(0, size) for size in arg.sizes] for arg in
-                      self.action_spec.functions[action].args]
 
         return actions.FunctionCall(action, params)
 
