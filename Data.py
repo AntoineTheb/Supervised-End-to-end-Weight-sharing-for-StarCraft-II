@@ -82,7 +82,7 @@ class State:
 
         if self.action:
             one_hot_position = np.zeros(Dataline.PARAM_SHAPE)
-            if self.action.function in [2, 12, 331]:
+            if self.action.function in Dataline.actionToIndex:
                 one_hot_position[tuple(self.action.arguments[1])[::-1] + (Dataline.actionToIndex[self.action.function],)] = 1
                 dataline.weight = 1
             else:
