@@ -17,9 +17,8 @@ class Dataline:
 
     def __init__(self):
         self.image = None
-        self.available_actions = None
-        self.action = None
         self.param = None
+        self.weight = None
 
     def show(self):
         plt.figure(figsize=(8, 8))
@@ -68,9 +67,12 @@ class State:
                                         axis=2)
 
         if self.action:
-            assert len(self.action.arguments) == 2
             one_hot_position = np.zeros(Dataline.PARAM_SHAPE)
-            one_hot_position[tuple(self.action.arguments[1]) + (Dataline.actionToIndex[self.action.function],)] = 1
+            if self.action.function in [2, 12, 331]:
+                one_hot_position[tuple(self.action.arguments[1]) + (Dataline.actionToIndex[self.action.function],)] = 1
+                dataline.weight = 1
+            else:
+                dataline.weight = 0
             dataline.param = one_hot_position
 
         return dataline
@@ -79,8 +81,6 @@ class State:
 class Dataset:
     def __init__(self):
         self.images = None
-        self.available_actions = None
-        self.actions = None
         self.params = None
         self.weights = None
 
@@ -95,9 +95,8 @@ class Dataset:
             nbStates += len(states)
 
         self.images = np.zeros((nbStates,) + Dataline.IMAGES_SHAPE)
-        self.available_actions = np.zeros((nbStates,) + Dataline.ACTION_SHAPE)
-        self.actions = np.zeros((nbStates,) + Dataline.ACTION_SHAPE)
         self.params = np.zeros((nbStates,) + Dataline.PARAM_SHAPE)
+        self.weights = np.ones(nbStates)
 
         offset = 0
         for f in files:
@@ -107,20 +106,21 @@ class Dataset:
 
                 dataline = state.toDataline()
                 self.images[offset] = dataline.image
-                self.available_actions[offset] = dataline.available_actions
-                self.actions[offset] = dataline.action
                 self.params[offset] = dataline.param
+                self.weights[offset] = dataline.weight
 
                 offset += 1
 
-        assert len(self.images) == len(self.available_actions) == len(self.actions) == len(self.params)
+        if np.isnan(self.images).any():
+            print("nan found in images", np.argwhere(np.isnan(self.images)))
 
-        self.weights = np.ones(self.actions.shape[0])
-        self.weights[self.actions[:, 7] == 1.] = (self.actions[:, 7] == 0).sum() / (self.actions[:, 7] == 1).sum()
-        self.weights = [self.weights, np.ones(self.actions.shape[0])]
+        if np.isnan(self.params).any():
+            print("nan found in params", np.argwhere(np.isnan(self.params)))
+
+        if np.isnan(self.weights).any():
+            print("nan found in weight", np.argwhere(np.isnan(self.weights)))
 
         print("input observations: ", np.shape(self.images))
-        print("input available actions ", np.shape(self.available_actions))
-        print("output actions: ", np.shape(self.actions))
         print("output params: ", np.shape(self.params))
         print("weights: ", np.shape(self.weights))
+        print(self.weights.sum(), "valid on", nbStates)
